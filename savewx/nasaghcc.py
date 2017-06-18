@@ -1,5 +1,6 @@
 import os
 import re
+import warnings
 from datetime import datetime, timedelta
 
 import requests
@@ -15,46 +16,65 @@ from .utils import save_image, get_image_srcs
 
 NASA_MSFC_BASE_URL = 'https://weather.msfc.nasa.gov'
 
-GOES_16_BASE_URL = '{}/cgi-bin/get-abi?'.format(NASA_MSFC_BASE_URL)
+GOES_16_BASE_URL = urlparse.urljoin(NASA_MSFC_BASE_URL, '/cgi-bin/get-abi')
+
+GOES_LEGACY_BASE_URL = urlparse.urljoin(NASA_MSFC_BASE_URL, '/cgi-bin/get-goes')
 
 
-def goes16(sat, latlon=None, xy=None,
-           bgmap='standard', zoom=1, past=0,
-           palette=None, colorbar=0, mapcolor='black',
-           quality=90, width=1000, height=800):
-
-    if not latlon and not xy:
-        raise ValueError("Must provide either one of latlon or xy")
-
-    params = {
-        'satellite': sat,
-        'map': bgmap,
-        'zoom': zoom,
-        'past': past,
-        'colorbar': colorbar,
-        'mapcolor': mapcolor,
-        'quality': quality,
-        'width': width,
-        'height': height,
-        'type': 'Image'
-    }
-
-    if latlon:
-        params['lat'], params['lon'] = latlon
-    elif xy:
-        params['x'], params['y'] = xy
-
-    if palette is not None:
-        params['palette'] = palette
-
+def goes16(sat, position, uselatlon=True, **kwargs):
+    params = _assemble_params(sat, position, uselatlon, **kwargs)
     return HTTPImageSave(GOES_16_BASE_URL, params, process_response=ghcc_dynamic_imgsave)
+
+
+def goeslegacy(sat, info, position, uselatlon=True, **kwargs):
+    params = _assemble_params(sat, position, uselatlon, info=info, **kwargs)
+    return HTTPImageSave(GOES_LEGACY_BASE_URL, params, process_response=ghcc_dynamic_imgsave)
+
+
+default_params = {
+    'map': 'standard',
+    'zoom': 1,
+    'past': 0,
+    'colorbar': 0,
+    'mapcolor': 'black',
+    'quality': 90,
+    'width': 1000,
+    'height': 800,
+    'type': 'Image'
+}
+
+
+def _assemble_params(sat, position, uselatlon, info=None, **kwargs):
+    if len(position) != 2:
+        raise ValueError("Position must be an x,y or lat,lon pair")
+
+    params = kwargs.copy()
+    for k in default_params:
+        if k not in params:
+            params[k] = default_params[k]
+
+    params['satellite'] = sat
+
+    if uselatlon:
+        params['lat'], params['lon'] = position[0], position[1]
+    else:
+        params['x'], params['y'] = position[0], position[1]
+    if info is not None:
+        params['info'] = info
+
+    if params['type'] != 'Image':
+        warnings.warn('Only Image type supported at this time. Default to Image type')
+        params['type'] = 'Image'
+
+    return params
 
 
 def ghcc_dynamic_imgsave(response, saveloc):
     img_urls = get_image_srcs(response.text)
 
     if not img_urls:
-        raise SaveException("Cannot parse an image URL for response: {}".format(response))
+        raise SaveException(
+            "Cannot parse an image URL for response. Text of response: \n\n{}".format(response.text))
 
     img_url_to_save = urlparse.urljoin(NASA_MSFC_BASE_URL, img_urls[0])
 
