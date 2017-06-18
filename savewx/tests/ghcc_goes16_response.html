@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+<style>
+body { margin: 0; padding: 0; }
+</style>
+<TITLE>NASA/MSFC Interactive GOES Data Selector</TITLE>
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-transform">
+	<script src="/js/libs/animation.js"></script>
+	<script src="/js/jquery/jquery.js"></script>
+	<script src="/js/jquery/jquery.timer.js"></script>
+	<script src="/js/mootools/mootools.js"></script>
+	<script src="/js/libs/moment.min.js"></script>
+	<script src="/js/libs/utcLocalClock.js"></script>
+	<script>
+	function setup(fileList) {
+	AnimationBoxes.setDivTag('blocks');
+	Animation.setSlideChangeListener(AnimationBoxes);
+	Animation.loadImages(fileList);
+	AnimationBoxes.setBoxWidth(5);
+	Animation.setSlideDwell(500);
+	Animation.setEndDwell(1000);
+	Animation.play();
+	}
+	</script>
+</HEAD>
+<IMG SRC="/goes/abi/dynamic/GOES001720171689nSPoh.jpg" WIDTH="1000" HEIGHT="800">
+</BODY>
+</HTML>
