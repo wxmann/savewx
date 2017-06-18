@@ -1,6 +1,7 @@
 # this is for testing only on local dev environment
 runner.py
 *.jpg
+*.gif
 
 # PyCharm
 .idea/
