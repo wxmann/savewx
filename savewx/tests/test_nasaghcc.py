@@ -31,7 +31,7 @@ def test_goes_16_successful(dummy_request1, dummy_request2, dummy_save_img):
     goes16save(saveloc)
 
     target = os.sep.join([saveloc, 'GHCC_20170617_0017.jpg'])
-    assert_correct_goes16_api_call(dummy_request1, sat, xy)
+    assert_correct_goes16_api_call(dummy_request1, sat, xy, uselatlon=False)
     dummy_request2.get.assert_called_with(NASA_MSFC_BASE_URL + '/goes/abi/dynamic/GOES001720171689nSPoh.jpg',
                                           stream=True)
     dummy_save_img.assert_called_with(dummy_img_response, target)
@@ -61,7 +61,7 @@ def test_goes_legacy_successful(dummy_request1, dummy_request2, dummy_save_img):
     goeslegacysave(saveloc)
 
     target = os.sep.join([saveloc, 'GHCC_20170617_0017.jpg'])
-    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy)
+    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False)
     dummy_request2.get.assert_called_with(NASA_MSFC_BASE_URL + '/goes/abi/dynamic/GOES001720171689nSPoh.jpg',
                                           stream=True)
     dummy_save_img.assert_called_with(dummy_img_response, target)
@@ -85,7 +85,8 @@ def test_goes_save_with_kwargs(dummy_request1, dummy_save_img):
     goeslegacysave = nasaghcc.goeslegacy(sat, info, xy, uselatlon=False, past=5, palette='ir2.pal')
     goeslegacysave(saveloc)
 
-    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, past=5, palette='ir2.pal')
+    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False,
+                                       past=5, palette='ir2.pal')
     dummy_save_img.assert_called_with(dummy_raw_response, saveloc)
 
 
@@ -107,7 +108,29 @@ def test_goes_save_handle_animation_kwarg(dummy_request1, dummy_save_img):
     goeslegacysave = nasaghcc.goeslegacy(sat, info, xy, uselatlon=False, type='animation')
     goeslegacysave(saveloc)
 
-    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy)
+    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False)
+    dummy_save_img.assert_called_with(dummy_raw_response, saveloc)
+
+
+@mock.patch('savewx.nasaghcc.ghcc_dynamic_imgsave')
+@mock.patch('savewx.core.requests')
+def test_goes_save_use_latlon(dummy_request1, dummy_save_img):
+    dummy_raw_response = mock.MagicMock()
+    dummy_raw_response.status_code = 200
+    with open('ghcc_response.html', 'r') as f:
+        response_text = f.read()
+        dummy_raw_response.text = response_text
+    dummy_request1.get.return_value = dummy_raw_response
+
+    saveloc = '/my/directory'
+
+    sat = 'GOES-E CONUS'
+    info = 'ir'
+    xy = (200, 55)
+    goeslegacysave = nasaghcc.goeslegacy(sat, info, xy, uselatlon=True)
+    goeslegacysave(saveloc)
+
+    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=True)
     dummy_save_img.assert_called_with(dummy_raw_response, saveloc)
 
 
@@ -130,23 +153,31 @@ def test_goes_legacy_failure(dummy_request1, dummy_request2, dummy_save_img):
     goeslegacysave = nasaghcc.goeslegacy(sat, info, xy, uselatlon=False)
     assert_raises(SaveException, goeslegacysave, saveloc)
 
-    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy)
+    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False)
     dummy_request2.get.assert_not_called()
 
 
-def assert_correct_goes16_api_call(req, sat, xy, **kwargs_to_explictly_check):
+def assert_correct_goes16_api_call(req, sat, position, uselatlon=True, **kwargs_to_explictly_check):
     call = req.get.call_args_list[0]
     args, kwargs = call[0:2]
     assert args[0] == GOES_16_BASE_URL
 
     queryparams = kwargs['params']
     for paramkey in ('satellite', 'map', 'zoom', 'past', 'colorbar',
-                     'mapcolor', 'quality', 'width', 'height', 'type', 'x', 'y'):
+                     'mapcolor', 'quality', 'width', 'height', 'type'):
         assert paramkey in queryparams
 
     assert queryparams['satellite'] == sat
-    assert queryparams['x'] == xy[0]
-    assert queryparams['y'] == xy[1]
+    if uselatlon:
+        assert 'lat' in queryparams
+        assert 'lon' in queryparams
+        assert queryparams['lat'] == position[0]
+        assert queryparams['lon'] == position[1]
+    else:
+        assert 'x' in queryparams
+        assert 'y' in queryparams
+        assert queryparams['x'] == position[0]
+        assert queryparams['y'] == position[1]
     assert queryparams['type'] == 'Image'
 
     for k in kwargs_to_explictly_check:
@@ -155,20 +186,29 @@ def assert_correct_goes16_api_call(req, sat, xy, **kwargs_to_explictly_check):
     assert kwargs['stream'] is True
 
 
-def assert_correct_goeslegacy_api_call(req, sat, info, xy, **kwargs_to_explictly_check):
+def assert_correct_goeslegacy_api_call(req, sat, info, position, uselatlon=True,
+                                       **kwargs_to_explictly_check):
     call = req.get.call_args_list[0]
     args, kwargs = call[0:2]
     assert args[0] == GOES_LEGACY_BASE_URL
 
     queryparams = kwargs['params']
     for paramkey in ('satellite', 'info', 'map', 'zoom', 'past', 'colorbar',
-                     'mapcolor', 'quality', 'width', 'height', 'type', 'x', 'y'):
+                     'mapcolor', 'quality', 'width', 'height', 'type'):
         assert paramkey in queryparams
 
     assert queryparams['satellite'] == sat
     assert queryparams['info'] == info
-    assert queryparams['x'] == xy[0]
-    assert queryparams['y'] == xy[1]
+    if uselatlon:
+        assert 'lat' in queryparams
+        assert 'lon' in queryparams
+        assert queryparams['lat'] == position[0]
+        assert queryparams['lon'] == position[1]
+    else:
+        assert 'x' in queryparams
+        assert 'y' in queryparams
+        assert queryparams['x'] == position[0]
+        assert queryparams['y'] == position[1]
     assert queryparams['type'] == 'Image'
 
     for k in kwargs_to_explictly_check:
