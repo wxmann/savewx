@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+<style>
+body { margin: 0; padding: 0; }
+</style>
+<TITLE>NASA/MSFC Interactive GOES Data Selector</TITLE>
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-transform">
+	<script src="/js/libs/animation.js"></script>
+	<script src="/js/jquery/jquery.js"></script>
+	<script src="/js/jquery/jquery.timer.js"></script>
+	<script src="/js/mootools/mootools.js"></script>
+	<script src="/js/libs/moment.min.js"></script>
+	<script src="/js/libs/utcLocalClock.js"></script>
+	<script>
+	function setup(fileList) {
+	AnimationBoxes.setDivTag('blocks');
+	Animation.setSlideChangeListener(AnimationBoxes);
+	Animation.loadImages(fileList);
+	AnimationBoxes.setBoxWidth(10);
+	Animation.setSlideDwell(500);
+	Animation.setEndDwell(1000);
+	Animation.play();
+	}
+	</script>
+</HEAD>
+Specify a valid latitude in the range of -90 to 90
+<P>We're sorry, but your web browser appears to be sending
+forms data which is inconsistent with what is expected as
+input.  It may be possible to remedy this as follows:
+<P>
+You may not have specified values for mandatory arguments such as:
+  sat, lat, lon
+<P>
+See the protocol specification at:
+<A HREF="http://weather.msfc.nasa.gov/GOES/getsatellite.html">http://weather.msfc.nasa.gov/GOES/getsatellite.html</A><P>
+<P> <HR>
+<IMG SRC="/jimcontact.png" WIDTH="500" HEIGHT="18">
+<BR>
+<IMG SRC="/paulcontact.png" WIDTH="500" HEIGHT="18">
+<BR><HR>
+</BODY>
+</HTML>

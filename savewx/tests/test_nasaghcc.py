@@ -1,7 +1,10 @@
 import os
 from unittest import mock
 
+from nose.tools import assert_raises
+
 from savewx import nasaghcc
+from savewx.core import SaveException
 from savewx.nasaghcc import GOES_16_BASE_URL, NASA_MSFC_BASE_URL, GOES_LEGACY_BASE_URL
 
 
@@ -62,6 +65,73 @@ def test_goes_legacy_successful(dummy_request1, dummy_request2, dummy_save_img):
     dummy_request2.get.assert_called_with(NASA_MSFC_BASE_URL + '/goes/abi/dynamic/GOES001720171689nSPoh.jpg',
                                           stream=True)
     dummy_save_img.assert_called_with(dummy_img_response, target)
+
+
+@mock.patch('savewx.nasaghcc.ghcc_dynamic_imgsave')
+@mock.patch('savewx.core.requests')
+def test_goes_save_with_kwargs(dummy_request1, dummy_save_img):
+    dummy_raw_response = mock.MagicMock()
+    dummy_raw_response.status_code = 200
+    with open('ghcc_response.html', 'r') as f:
+        response_text = f.read()
+        dummy_raw_response.text = response_text
+    dummy_request1.get.return_value = dummy_raw_response
+
+    saveloc = '/my/directory'
+
+    sat = 'GOES-E CONUS'
+    info = 'ir'
+    xy = (200, 55)
+    goeslegacysave = nasaghcc.goeslegacy(sat, info, xy, uselatlon=False, past=5, palette='ir2.pal')
+    goeslegacysave(saveloc)
+
+    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, past=5, palette='ir2.pal')
+    dummy_save_img.assert_called_with(dummy_raw_response, saveloc)
+
+
+@mock.patch('savewx.nasaghcc.ghcc_dynamic_imgsave')
+@mock.patch('savewx.core.requests')
+def test_goes_save_handle_animation_kwarg(dummy_request1, dummy_save_img):
+    dummy_raw_response = mock.MagicMock()
+    dummy_raw_response.status_code = 200
+    with open('ghcc_response.html', 'r') as f:
+        response_text = f.read()
+        dummy_raw_response.text = response_text
+    dummy_request1.get.return_value = dummy_raw_response
+
+    saveloc = '/my/directory'
+
+    sat = 'GOES-E CONUS'
+    info = 'ir'
+    xy = (200, 55)
+    goeslegacysave = nasaghcc.goeslegacy(sat, info, xy, uselatlon=False, type='animation')
+    goeslegacysave(saveloc)
+
+    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy)
+    dummy_save_img.assert_called_with(dummy_raw_response, saveloc)
+
+
+@mock.patch('savewx.nasaghcc.save_image')
+@mock.patch('savewx.nasaghcc.requests')
+@mock.patch('savewx.core.requests')
+def test_goes_legacy_failure(dummy_request1, dummy_request2, dummy_save_img):
+    fail_response = mock.MagicMock()
+    fail_response.status_code = 200
+    with open('ghcc_fail_response.html', 'r') as f:
+        response_text = f.read()
+        fail_response.text = response_text
+    dummy_request1.get.return_value = fail_response
+
+    saveloc = '/my/directory'
+
+    sat = 'GOES-E CONUS'
+    info = 'ir'
+    xy = (200, 55)
+    goeslegacysave = nasaghcc.goeslegacy(sat, info, xy, uselatlon=False)
+    assert_raises(SaveException, goeslegacysave, saveloc)
+
+    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy)
+    dummy_request2.get.assert_not_called()
 
 
 def assert_correct_goes16_api_call(req, sat, xy, **kwargs_to_explictly_check):

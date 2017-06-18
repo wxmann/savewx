@@ -70,7 +70,8 @@ def _assemble_params(sat, position, uselatlon, info=None, **kwargs):
 
 
 def ghcc_dynamic_imgsave(response, saveloc):
-    img_urls = get_image_srcs(response.text)
+    goes_jpg_filter = lambda img: 'GOES' in img and '.jpg' in img
+    img_urls = get_image_srcs(response.text, goes_jpg_filter)
 
     if not img_urls:
         raise SaveException(
@@ -90,7 +91,7 @@ def ghcc_extract_time(url):
     regex = 'GOES(\d{2})(\d{2})(\d{4})(\d{1,3})'
     found = re.search(regex, url)
     if not found:
-        raise url.InvalidResourceError("Cannot find date-time for file: {0}".format(url))
+        raise SaveException("Cannot find date-time for file: {0}".format(url))
 
     found_hour = int(found.group(1))
     found_min = int(found.group(2))
