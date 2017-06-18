@@ -7,6 +7,7 @@ from nose.tools import assert_raises
 from savewx import nasaghcc
 from savewx.core import SaveException
 from savewx.nasaghcc import GOES_16_BASE_URL, NASA_MSFC_BASE_URL, GOES_LEGACY_BASE_URL
+from savewx.tests._testcommon import open_resource
 
 
 @mock.patch('savewx.nasaghcc.save_image')
@@ -15,7 +16,7 @@ from savewx.nasaghcc import GOES_16_BASE_URL, NASA_MSFC_BASE_URL, GOES_LEGACY_BA
 def test_goes_16_successful(dummy_request1, dummy_request2, dummy_save_img):
     dummy_raw_response = mock.MagicMock()
     dummy_raw_response.status_code = 200
-    with open('ghcc_response.html', 'r') as f:
+    with open_resource('ghcc_response.html', 'r') as f:
         response_text = f.read()
         dummy_raw_response.text = response_text
     dummy_request1.get.return_value = dummy_raw_response
@@ -44,7 +45,7 @@ def test_goes_16_successful(dummy_request1, dummy_request2, dummy_save_img):
 def test_goes_legacy_successful(dummy_request1, dummy_request2, dummy_save_img):
     dummy_raw_response = mock.MagicMock()
     dummy_raw_response.status_code = 200
-    with open('ghcc_response.html', 'r') as f:
+    with open_resource('ghcc_response.html', 'r') as f:
         response_text = f.read()
         dummy_raw_response.text = response_text
     dummy_request1.get.return_value = dummy_raw_response
@@ -73,7 +74,7 @@ def test_goes_legacy_successful(dummy_request1, dummy_request2, dummy_save_img):
 def test_goes_save_with_kwargs(dummy_request1, dummy_save_img):
     dummy_raw_response = mock.MagicMock()
     dummy_raw_response.status_code = 200
-    with open('ghcc_response.html', 'r') as f:
+    with open_resource('ghcc_response.html', 'r') as f:
         response_text = f.read()
         dummy_raw_response.text = response_text
     dummy_request1.get.return_value = dummy_raw_response
@@ -96,7 +97,7 @@ def test_goes_save_with_kwargs(dummy_request1, dummy_save_img):
 def test_goes_save_handle_animation_kwarg(dummy_request1, dummy_save_img):
     dummy_raw_response = mock.MagicMock()
     dummy_raw_response.status_code = 200
-    with open('ghcc_response.html', 'r') as f:
+    with open_resource('ghcc_response.html', 'r') as f:
         response_text = f.read()
         dummy_raw_response.text = response_text
     dummy_request1.get.return_value = dummy_raw_response
@@ -118,7 +119,7 @@ def test_goes_save_handle_animation_kwarg(dummy_request1, dummy_save_img):
 def test_goes_save_use_latlon(dummy_request1, dummy_save_img):
     dummy_raw_response = mock.MagicMock()
     dummy_raw_response.status_code = 200
-    with open('ghcc_response.html', 'r') as f:
+    with open_resource('ghcc_response.html', 'r') as f:
         response_text = f.read()
         dummy_raw_response.text = response_text
     dummy_request1.get.return_value = dummy_raw_response
@@ -141,7 +142,7 @@ def test_goes_save_use_latlon(dummy_request1, dummy_save_img):
 def test_goes_legacy_failure(dummy_request1, dummy_request2, dummy_save_img):
     fail_response = mock.MagicMock()
     fail_response.status_code = 200
-    with open('ghcc_fail_response.html', 'r') as f:
+    with open_resource('ghcc_fail_response.html', 'r') as f:
         response_text = f.read()
         fail_response.text = response_text
     dummy_request1.get.return_value = fail_response
