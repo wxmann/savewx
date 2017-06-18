@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from unittest import mock
 
 from nose.tools import assert_raises
@@ -215,6 +216,24 @@ def assert_correct_goeslegacy_api_call(req, sat, info, position, uselatlon=True,
         assert queryparams[k] == kwargs_to_explictly_check[k]
 
     assert kwargs['stream'] is True
+
+
+def test_extract_time():
+    url1 = 'https://weather.msfc.nasa.gov/goes/abi/dynamic/GOES001720171689nSPoh.jpg'
+    extracted_time1 = nasaghcc.ghcc_extract_time(url1)
+    assert extracted_time1 == datetime(year=2017, month=6, day=17, hour=0, minute=17)
+
+    url2 = 'https://weather.msfc.nasa.gov/goes/abi/dynamic/GOES001720171knSPoh.jpg'
+    extracted_time2 = nasaghcc.ghcc_extract_time(url2)
+    assert extracted_time2 == datetime(year=2017, month=1, day=1, hour=0, minute=17)
+
+    url3 = 'https://weather.msfc.nasa.gov/goes/abi/dynamic/GOES00172017168knSPoh.jpg'
+    extracted_time3 = nasaghcc.ghcc_extract_time(url3)
+    assert extracted_time3 == datetime(year=2017, month=6, day=17, hour=0, minute=17)
+
+    url4 = 'https://weather.msfc.nasa.gov/goes/abi/dynamic/GOES0017201719nSPoh.jpg'
+    extracted_time4 = nasaghcc.ghcc_extract_time(url4)
+    assert extracted_time4 == datetime(year=2017, month=1, day=1, hour=0, minute=17)
 
 
 if __name__ == '__main__':

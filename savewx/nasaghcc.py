@@ -88,7 +88,7 @@ def ghcc_dynamic_imgsave(response, saveloc):
 
 
 def ghcc_extract_time(url):
-    regex = 'GOES(\d{2})(\d{2})(\d{4})(\d{1,3})'
+    regex = 'GOES(\d{2})(\d{2})(\d{4})(\d{1,3})(.{6})\.jpg'
     found = re.search(regex, url)
     if not found:
         raise SaveException("Cannot find date-time for file: {0}".format(url))
