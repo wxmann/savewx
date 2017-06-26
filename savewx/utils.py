@@ -1,5 +1,8 @@
+import os
 import shutil
 from html.parser import HTMLParser
+
+from savewx.logs import logger
 
 
 def save_image(response, saveloc):
@@ -48,3 +51,10 @@ class LinksHTMLParser(HTMLParser):
             return self.foundlinks
         else:
             return [link for link in self.foundlinks if filter_results(link)]
+
+
+def skip_save(saveloc, on_file_exists):
+    if on_file_exists.lower() == 'skip' and os.path.isfile(saveloc):
+        logger.warn("File: {} already exists, skipping".format(saveloc))
+        return True
+    return False

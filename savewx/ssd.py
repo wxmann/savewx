@@ -12,7 +12,7 @@ except ImportError:
     # PYTHON 3
     import urllib.parse as urlparse
 
-from .utils import get_links, save_image
+from .utils import get_links, save_image, skip_save
 from .core import HTTPImageSave
 
 
@@ -25,7 +25,8 @@ def ssd(stormid, enhancements, last=1):
 SSD_TIME_REGEX = r'\d{8}_\d{4}Z'
 
 
-def extract_img_from_response(response, saveloc, enhancements, last):
+def extract_img_from_response(response, saveloc, on_file_exists,
+                              enhancements, last):
     def filter_imgs(link):
         if re.search(SSD_TIME_REGEX, link) is None:
             return False
@@ -49,5 +50,6 @@ def extract_img_from_response(response, saveloc, enhancements, last):
         for img_link in imgs_for_enh[-go_back:]:
             filename = 'SSD_{}'.format(img_link)
             save_to = os.path.join(saveloc, filename)
-            direct_img_response = requests.get(urlparse.urljoin(response.url, img_link), stream=True)
-            save_image(direct_img_response, save_to)
+            if not skip_save(save_to, on_file_exists):
+                direct_img_response = requests.get(urlparse.urljoin(response.url, img_link), stream=True)
+                save_image(direct_img_response, save_to)

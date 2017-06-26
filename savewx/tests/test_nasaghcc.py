@@ -89,7 +89,7 @@ def test_goes_save_with_kwargs(dummy_request1, dummy_save_img):
 
     assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False,
                                        past=5, palette='ir2.pal')
-    dummy_save_img.assert_called_with(dummy_raw_response, saveloc)
+    dummy_save_img.assert_called_with(dummy_raw_response, saveloc, 'skip')
 
 
 @mock.patch('savewx.nasaghcc.ghcc_dynamic_imgsave')
@@ -111,7 +111,7 @@ def test_goes_save_handle_animation_kwarg(dummy_request1, dummy_save_img):
     goeslegacysave(saveloc)
 
     assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False)
-    dummy_save_img.assert_called_with(dummy_raw_response, saveloc)
+    dummy_save_img.assert_called_with(dummy_raw_response, saveloc, 'skip')
 
 
 @mock.patch('savewx.nasaghcc.ghcc_dynamic_imgsave')
@@ -133,7 +133,7 @@ def test_goes_save_use_latlon(dummy_request1, dummy_save_img):
     goeslegacysave(saveloc)
 
     assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=True)
-    dummy_save_img.assert_called_with(dummy_raw_response, saveloc)
+    dummy_save_img.assert_called_with(dummy_raw_response, saveloc, 'skip')
 
 
 @mock.patch('savewx.nasaghcc.save_image')
@@ -157,6 +157,35 @@ def test_goes_legacy_failure(dummy_request1, dummy_request2, dummy_save_img):
 
     assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False)
     dummy_request2.get.assert_not_called()
+
+
+@mock.patch('os.path.isfile', return_value=True)
+@mock.patch('savewx.nasaghcc.save_image')
+@mock.patch('savewx.nasaghcc.requests')
+@mock.patch('savewx.core.requests')
+def test_skip_if_file_already_exists(dummy_request1, dummy_request2, dummy_save_img, isfile_func):
+    dummy_raw_response = mock.MagicMock()
+    dummy_raw_response.status_code = 200
+    with open_resource('ghcc_response.html', 'r') as f:
+        response_text = f.read()
+        dummy_raw_response.text = response_text
+    dummy_request1.get.return_value = dummy_raw_response
+
+    dummy_img_response = mock.MagicMock()
+    dummy_img_response.status_code = 200
+    dummy_request2.get.return_value = dummy_img_response
+
+    saveloc = '/my/directory'
+
+    sat = 'GOES-E CONUS'
+    info = 'ir'
+    xy = (200, 55)
+    goeslegacysave = nasaghcc.goeslegacy(sat, info, xy, uselatlon=False)
+    goeslegacysave(saveloc)
+
+    assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False)
+    dummy_request2.get.assert_not_called()
+    dummy_save_img.assert_not_called()
 
 
 def assert_correct_goes16_api_call(req, sat, position, uselatlon=True, **kwargs_to_explictly_check):

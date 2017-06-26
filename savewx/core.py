@@ -1,15 +1,17 @@
 import requests
 
-from .utils import save_image
+from .utils import save_image, skip_save
 
 
 class HTTPImageSave(object):
     def __init__(self, url, queryparams=None,
-                 process_response=None, failure_callback=None):
+                 process_response=None, failure_callback=None,
+                 on_file_exists='skip'):
         self.url = url
         self.queryparams = queryparams
-        self.process_response = process_response or save_image
+        self.process_response = process_response or default_save
         self.failure_callback = failure_callback
+        self.on_file_exists = on_file_exists
 
     def __call__(self, saveloc):
         # TODO: add retry policy
@@ -20,7 +22,12 @@ class HTTPImageSave(object):
             else:
                 raise SaveException("Expected status 200, got {}".format(response.status_code))
         else:
-            self.process_response(response, saveloc)
+            self.process_response(response, saveloc, self.on_file_exists)
+
+
+def default_save(response, saveloc, on_file_exists):
+    if not skip_save(saveloc, on_file_exists):
+        save_image(response, saveloc)
 
 
 class SaveException(Exception):

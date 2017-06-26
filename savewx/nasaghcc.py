@@ -12,7 +12,7 @@ except ImportError:
     import urllib.parse as urlparse
 
 from .core import HTTPImageSave, SaveException
-from .utils import save_image, get_image_srcs
+from .utils import save_image, get_image_srcs, skip_save
 
 NASA_MSFC_BASE_URL = 'https://weather.msfc.nasa.gov'
 
@@ -69,7 +69,7 @@ def _assemble_params(sat, position, uselatlon, info=None, **kwargs):
     return params
 
 
-def ghcc_dynamic_imgsave(response, saveloc):
+def ghcc_dynamic_imgsave(response, saveloc, on_file_exists):
     goes_jpg_filter = lambda img: 'GOES' in img and '.jpg' in img
     img_urls = get_image_srcs(response.text, goes_jpg_filter)
 
@@ -83,8 +83,9 @@ def ghcc_dynamic_imgsave(response, saveloc):
     img_file = 'GHCC_{}.jpg'.format(img_ts.strftime('%Y%m%d_%H%M'))
     saveloc_file = os.sep.join([saveloc, img_file])
 
-    response = requests.get(img_url_to_save, stream=True)
-    return save_image(response, saveloc_file)
+    if not skip_save(saveloc_file, on_file_exists):
+        response = requests.get(img_url_to_save, stream=True)
+        save_image(response, saveloc_file)
 
 
 def ghcc_extract_time(url):

@@ -18,7 +18,7 @@ def test_call_save_successful_with_process_response_func(dummy_requests):
     imgsave = HTTPImageSave(url, process_response=dummy_process_response)
     imgsave(saveloc)
 
-    dummy_process_response.assert_called_with(dummy_response, saveloc)
+    dummy_process_response.assert_called_with(dummy_response, saveloc, 'skip')
 
 
 @mock.patch('savewx.core.requests')

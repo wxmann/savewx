@@ -176,3 +176,32 @@ def test_ssd_not_valid_stormid(dummy_request1, dummy_request2):
 
     dummy_request1.get.assert_called_with(ssd_url, params=None, stream=True)
     dummy_request2.get.assert_not_called()
+
+
+@mock.patch('os.path.isfile', return_value=True)
+@mock.patch('savewx.ssd.save_image')
+@mock.patch('savewx.ssd.requests')
+@mock.patch('savewx.core.requests')
+def test_skip_if_file_already_exists(dummy_request1, dummy_request2, dummy_save_img, isfile_func):
+    ssd_url = 'http://www.ssd.noaa.gov/PS/TROP/floaters/92L/imagery/'
+    dummy_raw_response = mock.MagicMock()
+    dummy_raw_response.status_code = 200
+    dummy_raw_response.url = ssd_url
+    with open_resource('ssd_response.html', 'r') as f:
+        response_text = f.read()
+        dummy_raw_response.text = response_text
+    dummy_request1.get.return_value = dummy_raw_response
+
+    dummy_img_response = mock.MagicMock()
+    dummy_img_response.status_code = 200
+    dummy_request2.get = mock.MagicMock()
+    dummy_request2.get.return_value = dummy_img_response
+
+    saveloc = '/my/directory'
+    types = ['avn', 'rgb']
+    ssdsave = ssd.ssd('92L', types)
+    ssdsave(saveloc)
+
+    dummy_request1.get.assert_called_with(ssd_url, params=None, stream=True)
+    dummy_request2.get.assert_not_called()
+    dummy_save_img.assert_not_called()
