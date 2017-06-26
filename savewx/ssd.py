@@ -44,8 +44,9 @@ def extract_img_from_response(response, saveloc, enhancements, last):
 
     for enh in enhancements:
         imgs_for_enh = [img for img in found_imgs if enh in img]
+        go_back = min(abs(last), len(imgs_for_enh))
 
-        for img_link in imgs_for_enh[-abs(last):]:
+        for img_link in imgs_for_enh[-go_back:]:
             filename = 'SSD_{}'.format(img_link)
             save_to = os.path.join(saveloc, filename)
             direct_img_response = requests.get(urlparse.urljoin(response.url, img_link), stream=True)
