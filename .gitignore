@@ -1,5 +1,5 @@
 # this is for testing only on local dev environment
-runner.py
+# runner.py
 *.jpg
 *.gif
 
