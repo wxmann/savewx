@@ -103,7 +103,7 @@ def ghcc_save_to_with(params):
         img_url_to_save = urlparse.urljoin(NASA_MSFC_BASE_URL, img_urls[0])
 
         img_ts = ghcc_extract_time(img_url_to_save)
-        template = 'GHCC_{sattype}_{zoom}_({x},{y})_{datetime}.jpg'
+        template = 'GHCC_{sattype}_{zoom}_{datetime}_({x},{y}).jpg'
         img_file = template.format(zoom=_zoom_dict[params['zoom']],
                                    x=x,
                                    y=y,
