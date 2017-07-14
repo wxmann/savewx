@@ -23,12 +23,14 @@ GOES_LEGACY_BASE_URL = urlparse.urljoin(NASA_MSFC_BASE_URL, '/cgi-bin/get-goes')
 
 def goes16(sat, position, uselatlon=True, **kwargs):
     params = _assemble_params(sat, position, uselatlon, **kwargs)
-    return HTTPImageSave(GOES_16_BASE_URL, params, process_response=ghcc_dynamic_imgsave)
+    return HTTPImageSave(GOES_16_BASE_URL, params,
+                         process_response=ghcc_save_to_with(params))
 
 
 def goeslegacy(sat, info, position, uselatlon=True, **kwargs):
     params = _assemble_params(sat, position, uselatlon, info=info, **kwargs)
-    return HTTPImageSave(GOES_LEGACY_BASE_URL, params, process_response=ghcc_dynamic_imgsave)
+    return HTTPImageSave(GOES_LEGACY_BASE_URL, params,
+                         process_response=ghcc_save_to_with(params))
 
 
 default_params = {
@@ -41,6 +43,12 @@ default_params = {
     'width': 1000,
     'height': 800,
     'type': 'Image'
+}
+
+_zoom_dict = {
+    1: 'high',
+    2: 'med',
+    4: 'low'
 }
 
 
@@ -69,23 +77,45 @@ def _assemble_params(sat, position, uselatlon, info=None, **kwargs):
     return params
 
 
-def ghcc_dynamic_imgsave(response, saveloc, on_file_exists):
-    goes_jpg_filter = lambda img: 'GOES' in img and '.jpg' in img
-    img_urls = get_image_srcs(response.text, goes_jpg_filter)
+def ghcc_save_to_with(params):
+    if 'x' in params and 'y' in params:
+        x, y = params['x'], params['y']
+    elif 'lat' in params and 'lon' in params:
+        x, y = params['lat'], params['lon']
+    else:
+        raise ValueError("Params must have either x,y or lat,lon")
 
-    if not img_urls:
-        raise SaveException(
-            "Cannot parse an image URL for response. Text of response: \n\n{}".format(response.text))
+    if 'info' in params:
+        # assume GOES legacy which requires info param
+        sattype = params['info'].upper()
+    else:
+        # assume GOES-16 and presence of channel information
+        sattype = 'Ch{}'.format(params['satellite'][-2:])
 
-    img_url_to_save = urlparse.urljoin(NASA_MSFC_BASE_URL, img_urls[0])
+    def ghcc_dynamic_imgsave(response, saveloc, on_file_exists):
+        goes_jpg_filter = lambda img: 'GOES' in img and '.jpg' in img
+        img_urls = get_image_srcs(response.text, goes_jpg_filter)
 
-    img_ts = ghcc_extract_time(img_url_to_save)
-    img_file = 'GHCC_{}.jpg'.format(img_ts.strftime('%Y%m%d_%H%M'))
-    saveloc_file = os.sep.join([saveloc, img_file])
+        if not img_urls:
+            raise SaveException(
+                "Cannot parse an image URL for response. Text of response: \n\n{}".format(response.text))
 
-    if not skip_save(saveloc_file, on_file_exists):
-        response = requests.get(img_url_to_save, stream=True)
-        save_image(response, saveloc_file)
+        img_url_to_save = urlparse.urljoin(NASA_MSFC_BASE_URL, img_urls[0])
+
+        img_ts = ghcc_extract_time(img_url_to_save)
+        template = 'GHCC_{sattype}_{zoom}_({x}, {y})_{datetime}.jpg'
+        img_file = template.format(zoom=_zoom_dict[params['zoom']],
+                                   x=x,
+                                   y=y,
+                                   sattype=sattype,
+                                   datetime=img_ts.strftime('%Y%m%d_%H%M'))
+        saveloc_file = os.sep.join([saveloc, img_file])
+
+        if not skip_save(saveloc_file, on_file_exists):
+            response = requests.get(img_url_to_save, stream=True)
+            save_image(response, saveloc_file)
+
+    return ghcc_dynamic_imgsave
 
 
 def ghcc_extract_time(url):

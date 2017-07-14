@@ -32,7 +32,7 @@ def test_goes_16_successful(dummy_request1, dummy_request2, dummy_save_img):
     goes16save = nasaghcc.goes16(sat, xy, uselatlon=False)
     goes16save(saveloc)
 
-    target = os.sep.join([saveloc, 'GHCC_20170617_0017.jpg'])
+    target = os.sep.join([saveloc, 'GHCC_Ch02_high_(200, 55)_20170617_0017.jpg'])
     assert_correct_goes16_api_call(dummy_request1, sat, xy, uselatlon=False)
     dummy_request2.get.assert_called_with(NASA_MSFC_BASE_URL + '/goes/abi/dynamic/GOES001720171689nSPoh.jpg',
                                           stream=True)
@@ -62,14 +62,14 @@ def test_goes_legacy_successful(dummy_request1, dummy_request2, dummy_save_img):
     goeslegacysave = nasaghcc.goeslegacy(sat, info, xy, uselatlon=False)
     goeslegacysave(saveloc)
 
-    target = os.sep.join([saveloc, 'GHCC_20170617_0017.jpg'])
+    target = os.sep.join([saveloc, 'GHCC_IR_high_(200, 55)_20170617_0017.jpg'])
     assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False)
     dummy_request2.get.assert_called_with(NASA_MSFC_BASE_URL + '/goes/abi/dynamic/GOES001720171689nSPoh.jpg',
                                           stream=True)
     dummy_save_img.assert_called_with(dummy_img_response, target)
 
 
-@mock.patch('savewx.nasaghcc.ghcc_dynamic_imgsave')
+@mock.patch('savewx.nasaghcc.ghcc_save_to_with')
 @mock.patch('savewx.core.requests')
 def test_goes_save_with_kwargs(dummy_request1, dummy_save_img):
     dummy_raw_response = mock.MagicMock()
@@ -89,10 +89,10 @@ def test_goes_save_with_kwargs(dummy_request1, dummy_save_img):
 
     assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False,
                                        past=5, palette='ir2.pal')
-    dummy_save_img.assert_called_with(dummy_raw_response, saveloc, 'skip')
+    dummy_save_img.return_value.assert_called_with(dummy_raw_response, saveloc, 'skip')
 
 
-@mock.patch('savewx.nasaghcc.ghcc_dynamic_imgsave')
+@mock.patch('savewx.nasaghcc.ghcc_save_to_with')
 @mock.patch('savewx.core.requests')
 def test_goes_save_handle_animation_kwarg(dummy_request1, dummy_save_img):
     dummy_raw_response = mock.MagicMock()
@@ -111,10 +111,10 @@ def test_goes_save_handle_animation_kwarg(dummy_request1, dummy_save_img):
     goeslegacysave(saveloc)
 
     assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=False)
-    dummy_save_img.assert_called_with(dummy_raw_response, saveloc, 'skip')
+    dummy_save_img.return_value.assert_called_with(dummy_raw_response, saveloc, 'skip')
 
 
-@mock.patch('savewx.nasaghcc.ghcc_dynamic_imgsave')
+@mock.patch('savewx.nasaghcc.ghcc_save_to_with')
 @mock.patch('savewx.core.requests')
 def test_goes_save_use_latlon(dummy_request1, dummy_save_img):
     dummy_raw_response = mock.MagicMock()
@@ -133,7 +133,7 @@ def test_goes_save_use_latlon(dummy_request1, dummy_save_img):
     goeslegacysave(saveloc)
 
     assert_correct_goeslegacy_api_call(dummy_request1, sat, info, xy, uselatlon=True)
-    dummy_save_img.assert_called_with(dummy_raw_response, saveloc, 'skip')
+    dummy_save_img.return_value.assert_called_with(dummy_raw_response, saveloc, 'skip')
 
 
 @mock.patch('savewx.nasaghcc.save_image')
