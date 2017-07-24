@@ -21,16 +21,16 @@ GOES_16_BASE_URL = urlparse.urljoin(NASA_MSFC_BASE_URL, '/cgi-bin/get-abi')
 GOES_LEGACY_BASE_URL = urlparse.urljoin(NASA_MSFC_BASE_URL, '/cgi-bin/get-goes')
 
 
-def goes16(sat, position, uselatlon=True, **kwargs):
+def goes16(sat, position, uselatlon=True, timefilter=None, **kwargs):
     params = _assemble_params(sat, position, uselatlon, **kwargs)
     return HTTPImageSave(GOES_16_BASE_URL, params,
-                         process_response=ghcc_save_to_with(params))
+                         process_response=ghcc_save_to_with(params, timefilter))
 
 
-def goeslegacy(sat, info, position, uselatlon=True, **kwargs):
+def goeslegacy(sat, info, position, uselatlon=True, timefilter=None, **kwargs):
     params = _assemble_params(sat, position, uselatlon, info=info, **kwargs)
     return HTTPImageSave(GOES_LEGACY_BASE_URL, params,
-                         process_response=ghcc_save_to_with(params))
+                         process_response=ghcc_save_to_with(params, timefilter))
 
 
 default_params = {
@@ -77,7 +77,10 @@ def _assemble_params(sat, position, uselatlon, info=None, **kwargs):
     return params
 
 
-def ghcc_save_to_with(params):
+def ghcc_save_to_with(params, timefilter):
+    if timefilter is None:
+        timefilter = lambda ts: True
+
     if 'x' in params and 'y' in params:
         x, y = params['x'], params['y']
     elif 'lat' in params and 'lon' in params:
@@ -103,6 +106,10 @@ def ghcc_save_to_with(params):
         img_url_to_save = urlparse.urljoin(NASA_MSFC_BASE_URL, img_urls[0])
 
         img_ts = ghcc_extract_time(img_url_to_save)
+        if not timefilter(img_ts):
+            warnings.warn('Image with time: {} did not pass filter, skipping'.format(img_ts))
+            return
+
         template = 'GHCC_{sattype}_{zoom}_{datetime}_({x},{y}).jpg'
         img_file = template.format(zoom=_zoom_dict[params['zoom']],
                                    x=x,
