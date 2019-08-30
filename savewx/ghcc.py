@@ -14,7 +14,6 @@ GOES_16_BASE_URL = urlparse.urljoin(NASA_MSFC_BASE_URL, '/cgi-bin/get-abi')
 
 GOES_LEGACY_BASE_URL = urlparse.urljoin(NASA_MSFC_BASE_URL, '/cgi-bin/get-goes')
 
-
 def create_filename(params, img_ts):
     template = 'GHCC_{sattype}_{zoom}_{datetime}_({x},{y}).jpg'
     x, y = location_info(params)
@@ -27,10 +26,13 @@ def create_filename(params, img_ts):
 
 
 
-def ghcc_save(params, to_bucket, timefilter=None):
+def ghcc_save(params, to_bucket, folder=None, timefilter=None):
     page_response = http_stream(GOES_16_BASE_URL, queryparams=params)
     img_response, img_ts = fetch_img_from_response(page_response, timefilter)
     filename = create_filename(params, img_ts)
+
+    if folder is not None:
+        filename = f'{folder}/{filename}'
 
     with img_response:
         s3_put(to_bucket, key=filename, content=img_response.content)

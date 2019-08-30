@@ -27,6 +27,8 @@ def http_stream(url, queryparams=None, retries=5):
             session = retry_session(retries)
             response = session.get(url, params=queryparams, stream=True)
 
+        if response is None:
+            print('Expected response to exist for url {}'.format(url))
         if response.status_code != 200:
             print("Expected status 200, got {} for url: {}".format(response.status_code, response.url))
         return response

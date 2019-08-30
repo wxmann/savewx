@@ -1,5 +1,3 @@
-import warnings
-
 _default_params = {
     'map': 'standard',
     'zoom': 1,
@@ -50,28 +48,3 @@ def with_defaults(params):
         if k not in result:
             result[k] = _default_params[k]
     return result
-
-
-def to_params(satellite, position, uselatlon, info=None, **kwargs):
-    if len(position) != 2:
-        raise ValueError("Position must be an x,y or lat,lon pair")
-
-    params = kwargs.copy()
-    for k in _default_params:
-        if k not in params:
-            params[k] = _default_params[k]
-
-    params['satellite'] = satellite
-
-    if uselatlon:
-        params['lat'], params['lon'] = position[0], position[1]
-    else:
-        params['x'], params['y'] = position[0], position[1]
-    if info is not None:
-        params['info'] = info
-
-    if params['type'] != 'Image':
-        warnings.warn('Only Image type supported at this time. Default to Image type')
-        params['type'] = 'Image'
-
-    return params
