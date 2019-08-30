@@ -6,18 +6,18 @@ provider:
   region: us-west-1
   profile: default
 
-iamRoleStatements:
-  - Effect: Allow
-    Action:
-        - s3:PutObject
-        - s3:PutObjectAcl
-    Resource: 'arn:aws:s3:::${self:custom.bucket}/*'
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+          - s3:PutObject
+          - s3:PutObjectAcl
+      Resource: 'arn:aws:s3:::${self:custom.bucketName}/*'
 
 functions:
   ghccsat:
     handler: savewx/handlers.ghcc_satellite
     environment:
-      bucket: ${self:custom.bucket}
+      bucket: ${self:custom.bucketName}
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
@@ -62,11 +62,11 @@ custom:
     dockerizePip: true
     slim: true
 
-  bucket: savewx-dump
+  bucketName: savewx-dump
 
 resources:
   Resources:
-    NewResource:
+    OutputBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: ${self:custom.bucket}
+        BucketName: ${self:custom.bucketName}
