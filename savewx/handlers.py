@@ -1,4 +1,4 @@
-from savewx.position import satellite_position
+from savewx.tcinfo import satellite_position
 from savewx.ghcc_params import with_defaults
 from savewx.ghcc import ghcc_save
 
@@ -16,7 +16,6 @@ example event JSON:
     "s3_bucket": "hurricane-bucket"
 }
 """
-
 def ghcc_satellite(event, context):
     storm_id = event['storm_id']
 
@@ -26,18 +25,3 @@ def ghcc_satellite(event, context):
     params['lon'] = lon
 
     ghcc_save(params, to_bucket=event['s3_bucket'])
-
-
-if __name__ == '__main__':
-    event = {
-        "storm_id": "al052019",
-        "params": {
-            "satellite": "GOESEastconusband13",
-            "zoom": 1,
-            "width": 1200,
-            "height": 900,
-            "palette": "ir10.pal"
-        },
-        "s3_bucket": "hurricane-bucket"
-    }
-    ghcc_satellite(event, None)
