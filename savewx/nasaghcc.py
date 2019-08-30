@@ -40,8 +40,8 @@ default_params = {
     'colorbar': 0,
     'mapcolor': 'black',
     'quality': 90,
-    'width': 1000,
-    'height': 800,
+    'width': 1200,
+    'height': 900,
     'type': 'Image'
 }
 

@@ -1,5 +1,6 @@
 import os
 import shutil
+from datetime import datetime
 from html.parser import HTMLParser
 
 from savewx.logs import logger
@@ -58,3 +59,15 @@ def skip_save(saveloc, on_file_exists):
         logger.warn("File: {} already exists, skipping".format(saveloc))
         return True
     return False
+
+
+def append_timestamp(prefix, ext):
+    def saveit(response, savedir, on_file_exists):
+        now = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        filename = '{}_{}.{}'.format(prefix, now, ext)
+        saveloc = os.path.join(savedir, filename)
+
+        if not skip_save(saveloc, on_file_exists):
+            save_image(response, saveloc)
+
+    return saveit
