@@ -18,7 +18,7 @@ def retry_session(retries, session=None, backoff_factor=0.3, status_forcelist=(5
     return session
 
 
-def http_stream(url, queryparams=None, retries=5):
+def http_stream(url, queryparams=None, retries=5, expected_response=200):
     print(f'Making request to URL: {url} with query parameters: {queryparams}')
     try:
         if not retries:
@@ -28,9 +28,10 @@ def http_stream(url, queryparams=None, retries=5):
             response = session.get(url, params=queryparams, stream=True)
 
         if response is None:
-            print('Expected response to exist for url {}'.format(url))
-        if response.status_code != 200:
-            print("Expected status 200, got {} for url: {}".format(response.status_code, response.url))
+            raise RequestException(f'Expected response to exist for url {url}')
+        elif response.status_code != expected_response:
+            raise RequestException(
+                f'Expected status {expected_response}, got {response.status_code} for url: {response.url}')
         return response
 
     except Exception as e:
@@ -42,3 +43,8 @@ def s3_put(bucket_name, key, content):
     print(f'Saving file: {key} to S3 bucket: {bucket_name}')
     s3_object = boto3.resource('s3').Object(bucket_name, key)
     s3_object.put(Body=content)
+
+
+
+class RequestException(Exception):
+    pass
