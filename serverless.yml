@@ -18,9 +18,11 @@ provider:
 functions:
   ghccsat:
     handler: savewx/handlers.ghcc_satellite
+    timeout: 10
 
   ttsat:
     handler: savewx/handlers.tt_satellite
+    timeout: 30
 
 plugins:
   - serverless-python-requirements

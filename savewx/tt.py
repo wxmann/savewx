@@ -1,5 +1,5 @@
 from datetime import timedelta
-from .request import http_stream, s3_put
+from .request import http_stream, s3_put, RequestException
 
 
 def tt_save_for_hr(params, datetime_, to_bucket, folder=None):
@@ -16,7 +16,11 @@ def tt_save_for_hr(params, datetime_, to_bucket, folder=None):
         if folder:
             dest = f'{folder}/{relpath}'
 
-        tt_response = http_stream(url)
+        try:
+            tt_response = http_stream(url)
+        except RequestException:
+            pass
+
         s3_put(to_bucket, key=dest, content=tt_response.content)
 
         dt += timedelta(minutes=5)
