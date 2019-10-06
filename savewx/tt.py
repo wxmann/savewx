@@ -18,9 +18,8 @@ def tt_save_for_hr(params, datetime_, to_bucket, folder=None):
 
         try:
             tt_response = http_stream(url)
+            s3_put(to_bucket, key=dest, content=tt_response.content)
         except RequestException:
             pass
-
-        s3_put(to_bucket, key=dest, content=tt_response.content)
 
         dt += timedelta(minutes=5)

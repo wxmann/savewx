@@ -5,6 +5,7 @@ from savewx.tcinfo import satellite_position
 from savewx.ghcc_params import with_defaults
 from savewx.ghcc import ghcc_save
 from savewx.tt import tt_save_for_hr
+from savewx.ssd import ssd_save
 
 """
 example event JSON:
@@ -60,6 +61,27 @@ def tt_satellite(event, context):
 
     folder = event.get('folder', None)
     tt_save_for_hr(params, datetime_=datetime_, to_bucket=bucket, folder=folder)
+
+
+"""
+example event JSON:
+{
+    "storm_id": "20W",
+    "params": {
+        "sattype": "rbtop"
+    },
+    "folder": "blah"
+}
+"""
+def ssd_satellite(event, context):
+    storm_id = event['storm_id']
+    bucket = os.getenv('bucket')
+
+    params = event['params']
+    params['storm'] = storm_id
+
+    folder = event.get('folder', None)
+    ssd_save(params, to_bucket=bucket, folder=folder)
 
 
 # if __name__ == '__main__':
