@@ -1,7 +1,9 @@
 import requests
 import boto3
+import os
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
+
 
 def retry_session(retries, session=None, backoff_factor=0.3, status_forcelist=(500, 502, 503, 504)):
     session = session or requests.Session()
@@ -44,6 +46,22 @@ def s3_put(bucket_name, key, content):
     s3_object = boto3.resource('s3').Object(bucket_name, key)
     s3_object.put(Body=content)
 
+
+def s3_retrieve(bucket_name, folder, dest, key_pred=None):
+    print(f'Retrieving files from S3 bucket: {bucket_name}')
+    if key_pred is None:
+        key_pred = lambda key: True
+
+    s3 = boto3.client('s3')
+    for bucket_obj in s3.list_objects(Bucket=bucket_name, Prefix=folder)['Contents']:
+        key = bucket_obj['Key']
+        if key_pred(key):
+            dest_folder = f'{dest}/{folder}'
+            if not os.path.exists(dest_folder):
+                os.makedirs(dest_folder)
+            dest_file = f'{dest}/{key}'
+            print(f'Saving file {key} to {dest_file}')
+            s3.download_file(bucket_name, key, dest_file)
 
 
 class RequestException(Exception):
